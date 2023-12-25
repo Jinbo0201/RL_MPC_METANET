@@ -1,6 +1,6 @@
 import gym
 from gym import spaces
-from env.metanet import *
+from metanetGym.metanet import *
 
 class MetanetEnv(gym.Env):
     def __init__(self):
@@ -13,11 +13,17 @@ class MetanetEnv(gym.Env):
         self.state = None
 
     def reset(self):
+        self.metanet.init_state()
+
         # 重置环境的状态
         self.state = self.np_random.uniform(low=0, high=1, size=(3,))
+
         return self.state
 
     def step(self, action):
+
+        self.metanet.step_state()
+
         # 执行动作并返回下一个状态、奖励和是否终止的标志
         assert self.action_space.contains(action), "Invalid action"
 
