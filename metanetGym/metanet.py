@@ -26,15 +26,24 @@ class Metanet(object):
         self.FLOW_MAX = 8040    # 最大流量用于标准化
         self.QUEUE_LENGTH_ONRAMP_MAX = 2000    # 最大匝道排队长度用于标准化
 
-        self.RANDOM_DEMAND_ORIGN_CYCLE = random.choice([0.5, 1, 1.5, 2])
-        self.RANDOM_DEMAND_ORIGN_MAX = random.randint(2500, 3500)
-        self.RANDOM_DEMAND_ORIGN_MIN = random.randint(500, 1500)
-        self.RANDOM_DEMAND_ONRAMP_CYCLE = random.choice([0.5, 1, 1.5, 2])
-        self.RANDOM_DEMAND_ONRAMP_MAX = random.randint(1000, 2000)
-        self.RANDOM_DEMAND_ONRAMP_MIN = random.randint(500, 1000)
-        self.RANDOM_DOWNSTREAM_DENSITY_CYCLE = random.choice([0.5, 1, 1.5, 2])
-        self.RANDOM_DOWNSTREAM_DENSITY_MAX = random.randint(50, 70)
-        self.RANDOM_DOWNSTREAM_DENSITY_MIN = random.randint(10, 30)
+        # self.RANDOM_DEMAND_ORIGN_CYCLE = random.choice([0.5, 1, 1.5])
+        # self.RANDOM_DEMAND_ORIGN_MAX = random.randint(2500, 3500)
+        # self.RANDOM_DEMAND_ORIGN_MIN = random.randint(500, 1500)
+        # self.RANDOM_DEMAND_ONRAMP_CYCLE = random.choice([0.5, 1, 1.5])
+        # self.RANDOM_DEMAND_ONRAMP_MAX = random.randint(1000, 2000)
+        # self.RANDOM_DEMAND_ONRAMP_MIN = random.randint(500, 1000)
+        # self.RANDOM_DOWNSTREAM_DENSITY_CYCLE = random.choice([0.5, 1, 1.5, 2])
+        # self.RANDOM_DOWNSTREAM_DENSITY_MAX = random.randint(50, 70)
+        # self.RANDOM_DOWNSTREAM_DENSITY_MIN = random.randint(10, 30)
+        self.RANDOM_DEMAND_ORIGN_CYCLE = 1
+        self.RANDOM_DEMAND_ORIGN_MAX = 2500
+        self.RANDOM_DEMAND_ORIGN_MIN = 1000
+        self.RANDOM_DEMAND_ONRAMP_CYCLE = 1
+        self.RANDOM_DEMAND_ONRAMP_MAX = 1500
+        self.RANDOM_DEMAND_ONRAMP_MIN = 750
+        self.RANDOM_DOWNSTREAM_DENSITY_CYCLE = 1
+        self.RANDOM_DOWNSTREAM_DENSITY_MAX = 60
+        self.RANDOM_DOWNSTREAM_DENSITY_MIN = 20
         # states
         self.state_density = [0] * self.NUM_SEGEMNT
         self.state_flow = [0] * self.NUM_SEGEMNT

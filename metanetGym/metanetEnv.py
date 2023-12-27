@@ -12,19 +12,19 @@ class MetanetEnv(gym.Env):
         # 定义METANET
         self.metanet = Metanet()
         # 初始化环境的内部状态
-        self.state = self.metanet.get_state()
         self.action = None
-        self.reward = None
+        self.state = None
         self.observation = None
+        self.reward = None
 
     def reset(self):
         self.metanet.init_state()
         # 重置环境的状态
-        self.state = self.metanet.get_state()
         self.action = None
+        self.state = self.metanet.get_state()
+        self.observation = self._get_observation()
         self.reward = None
-        self.observation = None
-        return self.state
+        return self.observation
 
     def step(self, action):
         # 执行动作并返回下一个状态、奖励和是否终止的标志
@@ -35,15 +35,7 @@ class MetanetEnv(gym.Env):
         self.metanet.step_state(VALUE_ACTION2ACTION * self.action)
         # 获取状态量
         self.state = self.metanet.get_state()
-        self.observation = [
-            self.state['flow'][0]/self.metanet.FLOW_MAX,
-            self.state['flow'][1] / self.metanet.FLOW_MAX,
-            self.state['flow'][2] / self.metanet.FLOW_MAX,
-            self.state['v'][0] / self.metanet.V_MAX,
-            self.state['v'][1] / self.metanet.V_MAX,
-            self.state['v'][2] / self.metanet.V_MAX,
-            self.state['queue_length_onramp'] / self.metanet.QUEUE_LENGTH_ONRAMP_MAX
-        ]
+        self.observation = self._get_observation()
         # 计算奖励
         self.reward = self._calculate_reward()
         # 判断是否终止
@@ -53,13 +45,26 @@ class MetanetEnv(gym.Env):
 
     def _calculate_reward(self):
         # 根据当前状态计算奖励
-        reward_online = self.metanet.DELTA_T * sum([x * y for x, y in zip(self.state['density'], self.state['v'])])
-        reward_queue = self.metanet.DELTA_T * (self.state['queue_length_origin'] + self.state['queue_length_onramp'])
+        reward_online = - self.metanet.DELTA_T * sum([x * y for x, y in zip(self.state['density'], self.state['v'])])
+        reward_queue = - self.metanet.DELTA_T * (self.state['queue_length_origin'] + self.state['queue_length_onramp'])
         return reward_online + reward_queue
 
     def _is_done(self):
         # 判断是否终止
+        # 训练6个小时
         return self.metanet.step_id * self.metanet.DELTA_T > 6
+
+    def _get_observation(self):
+        observation = [
+            self.state['flow'][0]/self.metanet.FLOW_MAX,
+            self.state['flow'][1] / self.metanet.FLOW_MAX,
+            self.state['flow'][2] / self.metanet.FLOW_MAX,
+            self.state['v'][0] / self.metanet.V_MAX,
+            self.state['v'][1] / self.metanet.V_MAX,
+            self.state['v'][2] / self.metanet.V_MAX,
+            self.state['queue_length_onramp'] / self.metanet.QUEUE_LENGTH_ONRAMP_MAX
+        ]
+        return observation
 
     def render(self, mode='human'):
         # 可选的渲染函数，用于可视化环境
