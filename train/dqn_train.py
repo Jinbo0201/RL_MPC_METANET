@@ -1,5 +1,7 @@
-import gym
+import os.path
 import random
+from datetime import datetime
+import json
 
 import matplotlib.pyplot as plt
 import torch
@@ -9,6 +11,8 @@ import torch.nn.functional as F
 from collections import deque
 
 from metanetGym.metanetEnv import MetanetEnv
+
+
 
 # 定义神经网络模型
 class DQN(nn.Module):
@@ -31,7 +35,7 @@ class DQNAgent:
         self.action_size = action_size
         self.memory = deque(maxlen=10000)
         self.batch_size = 32
-        self.gamma = 0.95
+        self.gamma = 0.9
         self.epsilon = 1.0
         self.epsilon_decay = 0.995
         self.epsilon_min = 0.01
@@ -83,7 +87,7 @@ agent = DQNAgent(state_size, action_size)
 # 训练 DQN 智能体
 return_list = []
 
-episodes = 1000
+episodes = 10
 for episode in range(episodes):
     state = env.reset()
     done = False
@@ -101,16 +105,35 @@ for episode in range(episodes):
     print(f"Episode: {episode+1}, Reward: {total_reward}")
     return_list.append(total_reward)
 
-episodes_list = list(range(len(return_list)))
-plt.plot(episodes_list, return_list)
+current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+dqn_file_path = '../result'
+dqn_file_name = os.path.join(dqn_file_path, f'dqn_model_{current_time}.pth')
+torch.save(agent, dqn_file_name)
+# dqn_model_para_dict = {
+#     'batch_size': agent.batch_size,
+#     'gamma': agent.gamma,
+#     'epsilon ': agent.epsilon,
+#     'epsilon_decay': agent.epsilon_decay,
+#     'epsilon_min': agent.epsilon_min,
+#     'others': None
+# }
+# dqn_model_para_json = json.dumps(dqn_model_para_dict, indent=4)
+# dqn_para_file_name = os.path.join(dqn_file_path, f'dqn_model_{current_time}_para.json')
+# with open(dqn_para_file_name, "w") as file:
+#     file.write(dqn_model_para_json)
+
+plt.figure()
+plt.plot(return_list)
 plt.xlabel('Episodes')
 plt.ylabel('Returns')
 plt.title('DQN on {}'.format(env_name))
-plt.show()
+
 
 
 # 使用训练好的智能体进行测试
 action_list = []
+reward_list = []
+queue_list = []
 episodes = 1
 for episode in range(episodes):
     state = env.reset()
@@ -119,16 +142,34 @@ for episode in range(episodes):
 
     while not done:
         action = agent.act(state)
-        action_list.append(action)
+        action = 3
         state, reward, done, _ = env.step(action)
         # env.render()
         total_reward += reward
 
-    print(f"Test Episode: {episode+1}, Reward: {total_reward}")
+        action_list.append(action)
+        reward_list.append(reward)
+        queue_list.append(state[-1])
 
-step_list = list(range(len(action_list)))
-plt.plot(step_list, action_list)
+    print(f"Test Episode: {episode+1}, Reward: {total_reward}")
+    print(f"Test Episode: {episode + 1}, TTS: {0.1 * sum(action_list) - total_reward}")
+
+plt.figure()
+plt.plot(action_list)
 plt.xlabel('Step')
-plt.ylabel('action')
-plt.title('DQN on {}'.format(env_name))
+plt.ylabel('Action')
+plt.title('Action on {}'.format(env_name))
+
+plt.figure()
+plt.plot(reward_list)
+plt.xlabel('Step')
+plt.ylabel('Reward')
+plt.title('Reward on {}'.format(env_name))
+
+plt.figure()
+plt.plot(queue_list)
+plt.xlabel('Step')
+plt.ylabel('Queue')
+plt.title('Queue on {}'.format(env_name))
+
 plt.show()

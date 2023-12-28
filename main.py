@@ -4,6 +4,7 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 import pyomo.environ as pyo
+from pyomo.environ import *
 
 def test_pyomo():
     # model = ConcreteModel()  # 定义模型
@@ -23,13 +24,31 @@ def test_pyomo():
     # model.obj = Objective(expr=(model.x - 0.5) ** 2 + (model.y - 1) ** 2)
     # model.con1 = Constraint(expr=model.x + model.y >= 1)
 
-    model = pyo.ConcreteModel()
-    model.x = pyo.Var([1, 2], domain=pyo.NonNegativeReals)
-    model.OBJ = pyo.Objective(expr=2 * model.x[1] + 3 * model.x[2])
-    model.Constraint1 = pyo.Constraint(expr=3 * model.x[1] + 4 * model.x[2] >= 1)
-    solver = pyo.SolverFactory('glpk')
+    # model = pyo.ConcreteModel()
+    # model.x = pyo.Var([1, 2], domain=pyo.NonNegativeReals)
+    # model.OBJ = pyo.Objective(expr=2 * model.x[1] + 3 * model.x[2])
+    # model.Constraint1 = pyo.Constraint(expr=3 * model.x[1] + 4 * model.x[2] >= 1)
+    # solver = pyo.SolverFactory('ipopt')
+    # solver.solve(model)
+    # model.display()
+
+
+
+    model = ConcreteModel()
+    model.x = Var(within=NonNegativeReals, bounds=(1, 5))
+    model.y = Var(within=NonNegativeReals, bounds=(1, 5))
+    model.z = Var(within=NonNegativeReals, bounds=(1, 5))
+    model.w = Var(within=NonNegativeReals, bounds=(1, 5))
+    model.obj = Objective(expr=model.x * model.w * (model.x + model.y + model.z) + model.z, sense=minimize)
+    model.con1 = Constraint(expr=model.x * model.y * model.z * model.w >= 25)
+    model.con2 = Constraint(expr=model.x ** 2 + model.y ** 2 + model.z ** 2 + model.w ** 2 <= 40)
+    solver = SolverFactory('ipopt')
     solver.solve(model)
-    model.display()
+    print('Objective: ', model.obj())
+    print('x: ', model.x())
+    print('y: ', model.y())
+    print('z: ', model.z())
+    print('w: ', model.w())
 
 
 # Press the green button in the gutter to run the script.

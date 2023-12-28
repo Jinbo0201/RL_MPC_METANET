@@ -36,7 +36,7 @@ class Metanet(object):
         # self.RANDOM_DOWNSTREAM_DENSITY_MAX = random.randint(50, 70)
         # self.RANDOM_DOWNSTREAM_DENSITY_MIN = random.randint(10, 30)
         self.RANDOM_DEMAND_ORIGN_CYCLE = 1
-        self.RANDOM_DEMAND_ORIGN_MAX = 2500
+        self.RANDOM_DEMAND_ORIGN_MAX = 3000
         self.RANDOM_DEMAND_ORIGN_MIN = 1000
         self.RANDOM_DEMAND_ONRAMP_CYCLE = 1
         self.RANDOM_DEMAND_ONRAMP_MAX = 1500
@@ -190,6 +190,7 @@ class Metanet(object):
 
     def _cal_flow_onramp(self):
         self.state_flow_onramp[self.ID_ONRAMP] = self.action * self._get_flow_onramp_min()
+        print('print(self.action)', self.action)
 
     def _get_destination_flow_max(self):
         value = max(min(self.state_density[self.NUM_SEGEMNT-1], self.DENSITY_CRIT), self.input_downsteam_density)
@@ -207,7 +208,8 @@ class Metanet(object):
         elif value < delta * 3:
             demand_origin = self.RANDOM_DEMAND_ORIGN_MAX
         else:
-            demand_origin = self.RANDOM_DEMAND_ORIGN_MIN
+            demand_origin = self.RANDOM_DEMAND_ORIGN_MAX - (
+                        self.RANDOM_DEMAND_ORIGN_MAX - self.RANDOM_DEMAND_ORIGN_MIN) / delta * (value - 3* delta)
         self.input_demand_origin = demand_origin
 
     def _cal_demand_onramp(self):
@@ -222,7 +224,8 @@ class Metanet(object):
         elif value < delta * 3:
             demand_onramp = self.RANDOM_DEMAND_ONRAMP_MAX
         else:
-            demand_onramp = self.RANDOM_DEMAND_ONRAMP_MIN
+            demand_onramp = self.RANDOM_DEMAND_ONRAMP_MAX - (
+                    self.RANDOM_DEMAND_ONRAMP_MAX - self.RANDOM_DEMAND_ONRAMP_MIN) / delta * (value - 3 * delta)
         self.input_demand_onramp = demand_onramp
 
     def _cal_downstream_density(self):
@@ -236,5 +239,6 @@ class Metanet(object):
         elif value < delta * 3:
             downstream_density = self.RANDOM_DOWNSTREAM_DENSITY_MAX
         else:
-            downstream_density = self.RANDOM_DOWNSTREAM_DENSITY_MIN
+            downstream_density = self.RANDOM_DOWNSTREAM_DENSITY_MAX - (
+                    self.RANDOM_DOWNSTREAM_DENSITY_MAX - self.RANDOM_DOWNSTREAM_DENSITY_MIN) / delta * (value - 3 * delta)
         self.input_downsteam_density = downstream_density

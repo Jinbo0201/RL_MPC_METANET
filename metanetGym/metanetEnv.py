@@ -45,9 +45,10 @@ class MetanetEnv(gym.Env):
 
     def _calculate_reward(self):
         # 根据当前状态计算奖励
-        reward_online = - self.metanet.DELTA_T * sum([x * y for x, y in zip(self.state['density'], self.state['v'])])
+        reward_online = - self.metanet.DELTA_T * sum(self.state['density']) * self.metanet.L * self.metanet.NUM_LINE
         reward_queue = - self.metanet.DELTA_T * (self.state['queue_length_origin'] + self.state['queue_length_onramp'])
-        return reward_online + reward_queue
+        reward_action = 0.1 * self.action
+        return reward_online + reward_queue + reward_action
 
     def _is_done(self):
         # 判断是否终止
