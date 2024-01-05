@@ -1,7 +1,6 @@
 import os.path
 import random
 from datetime import datetime
-import json
 
 import matplotlib.pyplot as plt
 import torch

@@ -6,11 +6,11 @@ class Metanet(object):
 
     def __init__(self):
         # parameters
-        self.NUM_SEGEMNT = 4
+        self.NUM_SEGMENT = 3
         self.ID_ONRAMP = 3 - 1
         self.DELTA_T = 10 / 3600  # 步长时间 h
         self.FREE_V = 102  # 自由速度 km/h
-        self.L = 1  # 路段长度 km
+        self.L_SEGMENT = 1  # 路段长度 km
         self.NUM_LINE = 2  # 车道数
         self.TAU = 18 / 3600  # 速度计算参数 h
         self.A = 1.867  # 速度计算参数 常量
@@ -45,12 +45,12 @@ class Metanet(object):
         self.RANDOM_DOWNSTREAM_DENSITY_MAX = 60
         self.RANDOM_DOWNSTREAM_DENSITY_MIN = 20
         # states
-        self.state_density = [0] * self.NUM_SEGEMNT
-        self.state_flow = [0] * self.NUM_SEGEMNT
-        self.state_v = [self.FREE_V] * self.NUM_SEGEMNT
+        self.state_density = [0] * self.NUM_SEGMENT
+        self.state_flow = [0] * self.NUM_SEGMENT
+        self.state_v = [self.FREE_V] * self.NUM_SEGMENT
         self.state_queue_length_origin = 0  # 入口处的队伍长度
         self.state_queue_length_onramp = 0  # 上匝道的队伍长度
-        self.state_flow_onramp = [0] * self.NUM_SEGEMNT
+        self.state_flow_onramp = [0] * self.NUM_SEGMENT
         # inputs
         self.input_demand_origin = 0  # 入口处的需求，即流量
         self.input_demand_onramp = 0  # 上匝道的需求，即流量
@@ -63,12 +63,12 @@ class Metanet(object):
     # 初始化状态量
     def init_state(self):
         # states
-        self.state_density = [0] * self.NUM_SEGEMNT
-        self.state_flow = [0] * self.NUM_SEGEMNT
-        self.state_v = [self.FREE_V] * self.NUM_SEGEMNT
+        self.state_density = [0] * self.NUM_SEGMENT
+        self.state_flow = [0] * self.NUM_SEGMENT
+        self.state_v = [self.FREE_V] * self.NUM_SEGMENT
         self.state_queue_length_origin = 0  # 入口处的队伍长度
         self.state_queue_length_onramp = 0  # 上匝道的队伍长度
-        self.state_flow_onramp = [0] * self.NUM_SEGEMNT
+        self.state_flow_onramp = [0] * self.NUM_SEGMENT
         # inputs
         self.input_demand_origin = 0  # 入口处的需求，即流量
         self.input_demand_onramp = 0  # 上匝道的需求，即流量
@@ -87,9 +87,9 @@ class Metanet(object):
         self._cal_downstream_density()
 
         self._cal_flow_onramp()
-        self._cal_state_flow()
         self._cal_state_v()
         self._cal_state_density()
+        self._cal_state_flow()
 
         self._cal_queue_length_onramp()
         self._cal_queue_length_origin()
@@ -106,64 +106,65 @@ class Metanet(object):
         state_dict['queue_length_origin'] = self.state_queue_length_origin
         state_dict['queue_length_onramp'] = self.state_queue_length_onramp
         state_dict['flow_onramp'] = self.state_flow_onramp
+        state_dict['input'] = [self.input_demand_origin, self.input_demand_onramp, self.input_downsteam_density]
         return state_dict
 
 
     def _cal_state_flow(self):
-        for id_segment in range(self.NUM_SEGEMNT):
+        for id_segment in range(self.NUM_SEGMENT):
             self.state_flow[id_segment] = self.NUM_LINE * self.state_density[id_segment] * self.state_v[id_segment]
 
     def _cal_state_v(self):
-        for id_segment in range(self.NUM_SEGEMNT):
+        for id_segment in range(self.NUM_SEGMENT):
             if id_segment == 0:
                 self.state_v[id_segment] = self.state_v[id_segment] + self.DELTA_T / self.TAU * (self._get_Ve(
-                    self.state_density[id_segment]) - self.state_v[id_segment]) + self.DELTA_T / self.L * (
+                    self.state_density[id_segment]) - self.state_v[id_segment]) + self.DELTA_T / self.L_SEGMENT * (
                                                    self.state_v[id_segment] - self.state_v[id_segment]) * \
                                            self.state_v[id_segment] - (self.ETA * self.DELTA_T) / (
-                                                       self.TAU * self.L) * (
+                                                       self.TAU * self.L_SEGMENT) * (
                                                    self.state_density[id_segment + 1] - self.state_density[
                                                id_segment]) / (
                                                    self.state_density[id_segment] + self.KAPPA) - (
                                                    self.MU * self.DELTA_T * self.state_flow_onramp[id_segment] *
                                                    self.state_v[id_segment]) / (
-                                                   self.L * self.NUM_LINE * (
+                                                   self.L_SEGMENT * self.NUM_LINE * (
                                                        self.state_density[id_segment] + self.KAPPA))
-            elif id_segment == self.NUM_SEGEMNT - 1:
+            elif id_segment == self.NUM_SEGMENT - 1:
                 self.state_v[id_segment] = self.state_v[id_segment] + self.DELTA_T / self.TAU * (self._get_Ve(
-                    self.state_density[id_segment]) - self.state_v[id_segment]) + self.DELTA_T / self.L * (
+                    self.state_density[id_segment]) - self.state_v[id_segment]) + self.DELTA_T / self.L_SEGMENT * (
                                                    self.state_v[id_segment - 1] - self.state_v[id_segment]) * \
                                            self.state_v[id_segment] - (self.ETA * self.DELTA_T) / (
-                                                       self.TAU * self.L) * (
+                                                       self.TAU * self.L_SEGMENT) * (
                                                    self._get_destination_flow_max() - self.state_density[id_segment]) / (
                                                    self.state_density[id_segment] + self.KAPPA) - (
                                                    self.MU * self.DELTA_T * self.state_flow_onramp[id_segment] *
                                                    self.state_v[id_segment]) / (
-                                                   self.L * self.NUM_LINE * (
+                                                   self.L_SEGMENT * self.NUM_LINE * (
                                                        self.state_density[id_segment] + self.KAPPA))
             else:
                 self.state_v[id_segment] = self.state_v[id_segment] + self.DELTA_T / self.TAU * (self._get_Ve(
-                    self.state_density[id_segment]) - self.state_v[id_segment]) + self.DELTA_T / self.L * (
+                    self.state_density[id_segment]) - self.state_v[id_segment]) + self.DELTA_T / self.L_SEGMENT * (
                                                    self.state_v[id_segment - 1] - self.state_v[id_segment]) * \
                                            self.state_v[id_segment] - (self.ETA * self.DELTA_T) / (
-                                                       self.TAU * self.L) * (
+                                                       self.TAU * self.L_SEGMENT) * (
                                                    self.state_density[id_segment + 1] - self.state_density[
                                                id_segment]) / (
                                                    self.state_density[id_segment] + self.KAPPA) - (
                                                    self.MU * self.DELTA_T * self.state_flow_onramp[id_segment] *
                                                    self.state_v[id_segment]) / (
-                                                   self.L * self.NUM_LINE * (
+                                                   self.L_SEGMENT * self.NUM_LINE * (
                                                        self.state_density[id_segment] + self.KAPPA))
 
     def _cal_state_density(self):
-        for id_segment in range(self.NUM_SEGEMNT):
+        for id_segment in range(self.NUM_SEGMENT):
             if id_segment == 0:
                 self.state_density[id_segment] = self.state_density[id_segment] + self.DELTA_T / (
-                        self.L * self.NUM_LINE) * (self._get_flow_origin_min() - self.state_flow[id_segment] +
-                                                   self.state_flow_onramp[id_segment])
+                        self.L_SEGMENT * self.NUM_LINE) * (self._get_flow_origin_min() - self.state_flow[id_segment] +
+                                                           self.state_flow_onramp[id_segment])
             else:
                 self.state_density[id_segment] = self.state_density[id_segment] + self.DELTA_T / (
-                        self.L * self.NUM_LINE) * (self.state_flow[id_segment - 1] - self.state_flow[id_segment] +
-                                                   self.state_flow_onramp[id_segment])
+                        self.L_SEGMENT * self.NUM_LINE) * (self.state_flow[id_segment - 1] - self.state_flow[id_segment] +
+                                                           self.state_flow_onramp[id_segment])
 
     def _get_Ve(self, density):
         return self.FREE_V * math.exp(-1 / self.A * (density / self.DENSITY_CRIT) ** self.A)
@@ -190,10 +191,10 @@ class Metanet(object):
 
     def _cal_flow_onramp(self):
         self.state_flow_onramp[self.ID_ONRAMP] = self.action * self._get_flow_onramp_min()
-        print('print(self.action)', self.action)
+        # print('print(self.action)', self.action)
 
     def _get_destination_flow_max(self):
-        value = max(min(self.state_density[self.NUM_SEGEMNT-1], self.DENSITY_CRIT), self.input_downsteam_density)
+        value = max(min(self.state_density[self.NUM_SEGMENT-1], self.DENSITY_CRIT), self.input_downsteam_density)
         return value
 
     def _cal_demand_origin(self):

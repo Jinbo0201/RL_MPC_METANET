@@ -1,5 +1,5 @@
 # This is a sample Python script.
-
+import pyomo.environ
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
@@ -41,7 +41,7 @@ def test_pyomo():
     model.w = Var(within=NonNegativeReals, bounds=(1, 5))
     model.obj = Objective(expr=model.x * model.w * (model.x + model.y + model.z) + model.z, sense=minimize)
     model.con1 = Constraint(expr=model.x * model.y * model.z * model.w >= 25)
-    model.con2 = Constraint(expr=model.x ** 2 + model.y ** 2 + model.z ** 2 + model.w ** 2 <= 40)
+    model.con2 = Constraint(expr=model.x ** 2 + model.y ** 2 + model.z * pyomo.environ.exp(model.z) + model.w ** 2 <= 40)
     solver = SolverFactory('ipopt')
     solver.solve(model)
     print('Objective: ', model.obj())
