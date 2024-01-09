@@ -1,11 +1,13 @@
 from metanetGym.metanetEnv import *
 
 TIME_LENGTH_STEP = 5 / 60  # 每个控制步长的时长，小时
+TIME_DELTA = 100 / 3600
 
 class CostMetanet(object):
 
     def __init__(self):
         self.env_cost = MetanetEnv()
+        # self.env_cost.metanet.DELTA_T = TIME_DELTA
         # self.env.metanet.DELTA_T = DELTA_TIME
 
     def cal_cost(self, action_list, state_begin, step_id_begin):

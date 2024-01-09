@@ -1,14 +1,16 @@
+import random
+
 import pandas as pd
 import copy
 from metanetGym.cost import *
+import matplotlib.pyplot as plt
 
 # 遗传算法参数
 population_size = 50  # 种群大小
 chromosome_length = 6  # 染色体长度
-mutation_rate = 0.1  # 变异率
+crossover_rate = 0.6  # 交叉率
+mutation_rate = 0.1 # 变异率
 generations = 100  # 迭代次数
-
-TIME_LENGTH_STEP = 5 / 60  # 每个控制步长的时长，小时
 
 
 # 生成初始种群
@@ -42,36 +44,41 @@ def selection(population, state, id_step):
 # 交叉操作（单点交叉）
 def crossover(parent1, parent2):
     crossover_point = random.randint(1, chromosome_length - 1)
-    child1 = parent1[:crossover_point] + parent2[crossover_point:]
-    child2 = parent2[:crossover_point] + parent1[crossover_point:]
-    return child1, child2
+    child = parent1[:crossover_point] + parent2[crossover_point:]
+    return child
 
 
 # 变异操作
 def mutate(chromosome):
     mutated_chromosome = chromosome.copy()
-    for i in range(chromosome_length):
-        if random.random() < mutation_rate:
-            mutated_chromosome[i] = random.randint(0, 4)
+    mutated_chromosome[random.randint(0, chromosome_length-1)] = random.randint(0, 4)
     return mutated_chromosome
 
 
 # 遗传算法主函数
 def genetic_algorithm(state, id_step):
+
+    plt.figure()
+
     population = generate_population()
+
     best_fitness = -float('inf')
     best_chromosome = None
+    best_fitness_list = []
 
     for generation in range(generations):
+
         population = selection(population, state, id_step)
 
         next_generation = []
-        while len(next_generation) < population_size:
-            parent1, parent2 = random.choices(population, k=2)
-            child1, child2 = crossover(parent1, parent2)
-            mutated_child1 = mutate(child1)
-            mutated_child2 = mutate(child2)
-            next_generation.extend([mutated_child1, mutated_child2])
+
+        for chromosome in population:
+            if random.random() < crossover_rate:
+                parent2 = random.choice(population)
+                chromosome = crossover(chromosome, parent2)
+            if random.random() < mutation_rate:
+                chromosome = mutate(chromosome)
+            next_generation.append(chromosome)
 
         population = next_generation
 
@@ -83,19 +90,10 @@ def genetic_algorithm(state, id_step):
                 best_chromosome = chromosome
 
         print(f"Generation {generation + 1}: Best Fitness = {best_fitness}, Best Chromosome = {best_chromosome}")
+        best_fitness_list.append(best_fitness)
 
-    env_cost = MetanetEnv()
-    env_cost.reset()
-    env_cost.set_state(state, id_step)
-    total_reward = 0
-    action_list = best_chromosome
-    for action in action_list:
-        for _ in range(int(TIME_LENGTH_STEP / env_cost.metanet.DELTA_T)):
-            observation, reward, done, _ = env_cost.step(action)
-            total_reward += reward
-    # self.env_cost.render()
-    # return total_reward
-    env_cost.render()
+    plt.plot(best_fitness_list)
+    plt.show()
 
     return best_chromosome
 
@@ -120,17 +118,17 @@ action_list = []
 
 done = False
 
-action_best = [4, 4]
+action_best_list = [4, 4, 4, 4, 4, 4]
 while not done:
     # action = env.action_space.sample()  # 示例：随机选择动作
 
     if env.metanet.step_id % 30 == 0 and env.metanet.step_id > 0:
-        action_best = genetic_algorithm(copy.deepcopy((env.state)), env.metanet.step_id)  # 示例：随机选择动作
-        print('print(action_best) ', action_best)
+        action_best_list = genetic_algorithm(env.state, env.metanet.step_id)  # 示例：随机选择动作
+        print('print(action_best) ', action_best_list)
 
-    observation, reward, done, _ = env.step(action_best[0])
+    observation, reward, done, _ = env.step(action_best_list[0])
     reward_list.append(reward)
-    action_list.append(action_best)
+    action_list.append(action_best_list)
     # print(env.metanet.state_density)
     df_density.loc[len(df_density)] = env.metanet.state_density
     df_flow.loc[len(df_flow)] = [num * env.metanet.FLOW_MAX for num in observation[:3]]
